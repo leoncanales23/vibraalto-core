@@ -1,0 +1,219 @@
+/* ------------------------------------------ */
+/* ESTILOS GLOBALES Y DE CONTENEDORES */
+/* ------------------------------------------ */
+
+/* Estilos de Tipografía: Inter y Poppins son cargados via CDN en index.html */
+/* Nota: En el index.html actual no están, por lo que usaremos Inter como base */
+.brand-font {
+    font-family: 'Poppins', sans-serif;
+}
+.text-vibra {
+    color: #8B5CF6; /* Púrpura de VibraAlto */
+}
+
+body {
+    margin: 0;
+    font-family: "Inter", sans-serif;
+    /* La clase bg-grid de Tailwind simula el fondo, pero se añaden colores base */
+    background-color: #f8f8f8;
+    color: #1f1f1f;
+    min-height: 100vh;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ------------------------------------------ */
+/* ESTILOS DE TRANSICIÓN Y BOTONES */
+/* ------------------------------------------ */
+
+/* Estilo para los botones modernos (usado en el Paso 2: Éxito) */
+.btn-modern {
+    background-color: #8B5CF6; /* Púrpura principal */
+    color: white;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.5), 0 4px 6px -4px rgba(139, 92, 246, 0.1);
+}
+
+.btn-modern:hover {
+    background-color: #7c4dff;
+    transform: translateY(-1px);
+}
+
+/* Estilo para el botón manual (fallback) */
+.manual-btn {
+    margin-top: 20px;
+    background-color: #e0b539; /* Dorado de ExoLeón */
+    color: #1f1f1f;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.manual-btn:hover {
+    background-color: #f5d36b;
+}
+
+/* ------------------------------------------ */
+/* CONTENEDOR PRINCIPAL Y HERO (Paso 2) */
+/* ------------------------------------------ */
+
+main {
+    padding: 40px;
+    text-align: center;
+}
+
+.hero h1 {
+    font-size: 3em;
+    color: #e0b539;
+}
+
+.cta {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #8B5CF6;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.cta:hover {
+    background-color: #7c4dff;
+}
+
+/* ------------------------------------------ */
+/* ESCÁNER BIOMÉTRICO (PASO 1) */
+/* ------------------------------------------ */
+
+.overlay {
+    /* Estilos base del age gate, ajustados para el nuevo look */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(160deg, #1f1f1f, #000000);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: #f2f2f2;
+    z-index: 10;
+}
+
+.gate-content {
+    /* Asegura que el contenido esté centrado */
+    text-align: center;
+    padding: 20px;
+}
+
+.gate-content h1 {
+    color: #8B5CF6; /* Púrpura */
+    margin-bottom: 5px;
+    font-size: 2.5em;
+    font-family: 'Poppins', sans-serif;
+}
+
+.scanner-card {
+    background-color: #333;
+    padding: 8px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    margin: 20px 0;
+    /* Ajuste de tamaño para el contenedor del scanner */
+    width: 90vw; /* Ampliado para la vista móvil/desktop */
+    max-width: 1000px; /* AUMENTADO DE 600px A 1000px para que sea más grande en monitores grandes */
+    aspect-ratio: 4/3; /* Mantiene una proporción de video estándar */
+    position: relative;
+    overflow: hidden;
+}
+
+.scanner-viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Estilos del Loader (para 'camera-loading') */
+.camera-loader {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+}
+
+.loader-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #8B5CF6; /* Púrpura de VibraAlto */
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+}
+
+.loader-text {
+    margin-top: 10px;
+    color: white;
+}
+
+/* Estilos para que la cámara y el canvas se vean grandes y centrados */
+#video, .camera-feed {
+    width: 100%; 
+    height: 100%;
+    object-fit: cover; /* Asegura que el video cubra el área sin deformarse */
+    border-radius: 8px; 
+    display: block;
+}
+
+/* Asegura que el canvas (donde se dibuja el recuadro) se superponga al video */
+#canvas, .camera-feed-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%; 
+    height: 100%;
+}
+
+.feedback-status {
+    margin-top: 10px;
+    font-size: 1.1em;
+    font-weight: 500;
+    color: #e0b539; /* Dorado */
+}
+
+/* ------------------------------------------ */
+/* KEYFRAMES AUXILIARES */
+/* ------------------------------------------ */
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.5; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 0.5s ease-out;
+}

@@ -3,30 +3,103 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VibraAlto + ExoLeón</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>Verificación Biométrica | VibraAlto</title>
+  <!-- Enlace a la carpeta 'css' y al archivo 'styles.css' -->
+  <link rel="stylesheet" href="assets/css/styles.css">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Poppins (Moderno) & Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Poppins:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- Face API -->
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+  <!-- Iconos -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
 </head>
-<body>
-  <div id="age-gate" class="overlay">
-    <div class="gate-content">
-      <h1>⚡ VibraAlto Experience</h1>
-      <p>Contenido exclusivo para mayores de 18 años.</p>
-      <button id="enterBtn">Soy mayor de 18</button>
+<body class="h-screen flex flex-col items-center justify-center relative bg-white bg-grid">
+
+  <!-- ========================================== -->
+  <!-- PASO 1: ESCÁNER BIOMÉTRICO (MODERNO) -->
+  <!-- ========================================== -->
+  <div id="step-scanner" class="relative z-10 flex flex-col items-center w-full max-w-md px-6 text-center transition-all duration-500">
+    
+    <!-- Header Limpio -->
+    <div class="mb-10 animate-fade-in-down">
+      <div class="flex items-center justify-center gap-2 mb-1">
+        <!-- Logo minimalista en negro/púrpura -->
+        <span class="text-2xl font-bold tracking-tight text-gray-900 brand-font">VIBRA<span class="text-vibra">ALTO</span></span>
+      </div>
+      <p class="text-gray-500 text-sm font-medium uppercase tracking-widest mt-2">Acceso Seguro</p>
     </div>
+
+    <!-- Card del Scanner (Blanco con sombra suave) -->
+    <div class="bg-white p-2 rounded-3xl shadow-2xl shadow-purple-100 border border-gray-100">
+      <div class="relative w-64 h-64 rounded-2xl overflow-hidden bg-gray-50">
+        <video id="video" class="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]" autoplay muted playsinline></video>
+        <canvas id="canvas" class="absolute inset-0 w-full h-full transform scale-x-[-1]"></canvas>
+        
+        <!-- UI Overlay -->
+        <div id="scan-line" class="scan-line hidden"></div>
+        
+        <!-- Loader State -->
+        <div id="camera-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm z-20">
+          <div class="loader mb-3"></div>
+          <span class="text-xs text-gray-500 font-medium animate-pulse">Iniciando cámara...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback Estado -->
+    <div class="mt-8">
+      <div class="inline-flex items-center px-4 py-2 rounded-full bg-purple-50 border border-purple-100">
+        <div class="w-2 h-2 rounded-full bg-purple-500 animate-pulse mr-2"></div>
+        <p id="status-text" class="text-purple-700 font-medium text-sm">Esperando rostro...</p>
+      </div>
+      <p class="text-xs text-gray-400 mt-3 max-w-xs mx-auto">
+        Por favor, centra tu rostro en el recuadro para verificar tu edad.
+      </p>
+    </div>
+
+    <!-- Fallback Manual -->
+    <button id="manual-entry-btn" class="hidden mt-6 text-xs text-gray-400 hover:text-purple-600 underline transition">
+      Ingresar manualmente si la cámara falla
+    </button>
   </div>
 
-  <main id="main-content" class="hidden">
-    <section class="hero">
-      <h1>ExoLeón 🔥</h1>
-      <p>El guardián digital de VibraAlto te da la bienvenida.</p>
-      <a href="https://vibraalto.cl" target="_blank" class="cta">Visitar VibraAlto.cl</a>
-    </section>
+  <!-- ========================================== -->
+  <!-- PASO 2: ÉXITO (MODERNO & LIMPIO) -->
+  <!-- ========================================== -->
+  <div id="step-success" class="hidden relative z-10 w-full max-w-lg px-8 py-12 bg-white rounded-3xl shadow-xl border border-gray-100 text-center m-4">
+    
+    <!-- Icono Check -->
+    <div class="mx-auto w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+      <i data-lucide="check" class="w-8 h-8"></i>
+    </div>
 
-    <footer>
-      <p>© 2025 VibraAlto SpA — Inteligencia + Innovación</p>
-    </footer>
-  </main>
+    <h2 class="text-3xl font-bold text-gray-900 mb-2 brand-font">ExoLeon</h2>
+    <p class="text-gray-500 mb-8">Has confirmado ser mayor de edad. Bienvenido a VibraAlto.</p>
 
-  <script src="exoleon-hook.js"></script>
+    <!-- Botón Principal -->
+    <a href="https://vibraalto.cl" class="btn-modern w-full py-4 rounded-xl text-lg flex items-center justify-center gap-2 group">
+      <span>Explorar Servicios</span>
+    </a>
+    
+    <div class="mt-6 flex justify-center gap-4 border-t border-gray-100 pt-6">
+       <span class="text-xs text-gray-400 font-medium">STRATEGY</span>
+       <span class="text-xs text-gray-400 font-medium">DESIGN</span>
+       <span class="text-xs text-gray-400 font-medium">GROWTH</span>
+    </div>
+  </div>
+  
+  <!-- Footer Legal (Fijo en la parte inferior) -->
+  <footer class="fixed bottom-0 left-0 w-full p-4 text-center text-gray-500 text-xs bg-white/70 backdrop-blur-sm border-t border-gray-100">
+    &copy; 2025 VibraAlto SpA — Inteligencia + Innovación
+  </footer>
+  <!-- Enlace a la carpeta 'js' y al archivo 'main.js' -->
+  <script src="assets/js/main.js" defer></script>
 </body>
 </html>
