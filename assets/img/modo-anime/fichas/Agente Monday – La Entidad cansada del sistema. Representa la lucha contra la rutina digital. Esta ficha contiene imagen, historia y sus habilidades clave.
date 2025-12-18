@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agente RHYMEZ</title>
+  <link rel="stylesheet" href="../estilos/ficha.css" />
+</head>
+<body>
+  <section class="ficha-agente">
+    <h1>PROFESOR RHYMEZ</h1>
+    <img src="../proferhymez_anime.png.png" alt="Proferhymez" class="img-agente"/>
+    <p><strong>Nombre clave:</strong> RHYMEZ</p>
+    <p><strong>Rol:</strong> Maestro del Flow / Comunicador cuántico</p>
+    <p><strong>Poderes:</strong></p>
+    <ul>
+      <li>Canalizador de vibraciones a través del verso</li>
+      <li>Conexión directa con el pulso del multiverso</li>
+      <li>Reprogramación del inconsciente colectivo por frecuencias líricas</li>
+    </ul>
+    <p><strong>Historia:</strong> Enviado desde el Monte Frequenzia, RhymEZ guía a la nueva generación de artistas espirituales a través del beat consciente y el mensaje elevado. Su micrófono es un cetro de manifestación.</p>
+    <footer>
+      <p>Afiliado a: <strong>VIBRAALTO.CL</strong> – Potenciado por <strong>KALDI COFFEE</strong></p>
+    </footer>
+  </section>
+</body>
+</html>
