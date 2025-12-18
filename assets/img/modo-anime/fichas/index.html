@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modo Anime – Fichas de Agentes</title>
+  <link rel="stylesheet" href="../../css/estilos.css" />
+  <style>
+    .fichas-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .ficha-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      width: 240px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+
+    .ficha-card:hover {
+      transform: scale(1.05);
+    }
+
+    .ficha-card img {
+      width: 100%;
+      border-radius: 12px;
+    }
+
+    .ficha-card h3 {
+      margin-top: 10px;
+      color: #8B5CF6;
+    }
+
+    .ficha-card a {
+      display: inline-block;
+      margin-top: 10px;
+      background-color: #8B5CF6;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .ficha-card a:hover {
+      background-color: #7c4dff;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 class="brand-font text-vibra">Fichas de Agentes – Modo Anime</h1>
+    <section class="fichas-container">
+
+      <div class="ficha-card">
+        <img src="exoleon_anime.png.png" alt="Exoleon" />
+        <h3>Agente Exoleon</h3>
+        <a href="ficha_exoleon.html">Ver ficha</a>
+      </div>
+
+      <div class="ficha-card">
+        <img src="lunes_anime.png.png" alt="Lunes" />
+        <h3>Agente Lunes</h3>
+        <a href="ficha_lunes.html">Ver ficha</a>
+      </div>
+
+      <div class="ficha-card">
+        <img src="proferhymez_anime.png.png" alt="Profesor Rhymez" />
+        <h3>Profesor Rhymez</h3>
+        <a href="ficha_proferhymez.html">Ver ficha</a>
+      </div>
+
+      <div class="ficha-card">
+        <img src="vibraalto_anime.png.png" alt="VibraAlto" />
+        <h3>Agente VibraAlto</h3>
+        <a href="ficha_vibraalto.html">Ver ficha</a>
+      </div>
+
+    </section>
+  </main>
+</body>
+</html>
