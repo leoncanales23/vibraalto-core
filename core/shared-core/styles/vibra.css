@@ -1,0 +1,33 @@
+@import './base.css';
+
+.vibra-card {
+  background: var(--vibra-color-surface-alt);
+  border-radius: var(--vibra-radius);
+  padding: 16px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.vibra-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, var(--vibra-color-primary), var(--vibra-color-secondary));
+  color: #0b1021;
+  border: none;
+  border-radius: var(--vibra-radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--vibra-transition), box-shadow var(--vibra-transition);
+}
+
+.vibra-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(124, 58, 237, 0.25);
+}
+
+.vibra-text-muted {
+  color: var(--vibra-color-muted);
+}
