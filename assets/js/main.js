@@ -4,6 +4,7 @@ const canvas = document.getElementById('canvas');
 const statusText = document.getElementById('status-text');
 const loader = document.getElementById('camera-loading');
 const manualBtn = document.getElementById('manual-entry-btn');
+const exportCliBtn = document.getElementById('export-cli-btn');
 
 // Elementos de transición del nuevo HTML (Paso 1 y Paso 2)
 const stepScanner = document.getElementById('step-scanner'); // Paso 1 (Scanner)
@@ -67,6 +68,34 @@ if (manualBtn) {
 
     // 2. Enlazar el evento click directamente
     manualBtn.addEventListener('click', grantAccess); 
+}
+
+// Botón CLI de exportación: copia un comando listo para usar
+if (exportCliBtn) {
+    const buildCliCommand = (format = 'gltf') => {
+        const session = new Date().toISOString().replace(/[:.]/g, '-');
+        const name = 'vibraalto-mask';
+        const maskPath = './data/mask.npy';
+        return `python -m tools.mesh_exporter export --form mask --mask ${maskPath} --format ${format} --session ${session} --name ${name}`;
+    };
+
+    exportCliBtn.addEventListener('click', () => {
+        const cmd = buildCliCommand();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(cmd)
+                .then(() => {
+                    exportCliBtn.innerText = 'Comando copiado';
+                    setTimeout(() => {
+                        exportCliBtn.innerText = 'Exportar malla (CLI)';
+                    }, 1800);
+                })
+                .catch(err => {
+                    console.error('No se pudo copiar el comando CLI', err);
+                });
+        } else {
+            console.log('CLI export:', cmd);
+        }
+    });
 }
 
 
