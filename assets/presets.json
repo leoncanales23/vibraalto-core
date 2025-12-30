@@ -1,0 +1,115 @@
+{
+  "presets": [
+    {
+      "id": "veil",
+      "label": "Veil",
+      "description": "Velos de densidad fina con gradientes suaves.",
+      "sdf": {
+        "fields": [
+          { "type": "fbm", "octaves": 5, "scale": 0.9, "warp": 0.35 },
+          { "type": "radial_gradient", "radius": 0.68, "feather": 0.18 }
+        ],
+        "operators": ["smooth_union", "soft_intersect"],
+        "falloff": 0.42
+      },
+      "forces": {
+        "flow": 0.52,
+        "curl": 0.28,
+        "gravity": 0.12,
+        "attractors": [
+          { "position": [0.0, 0.35, 0.12], "strength": 0.32 },
+          { "position": [-0.12, -0.25, 0.0], "strength": 0.15 }
+        ]
+      },
+      "palette": {
+        "background": "#070712",
+        "stops": ["#0f172a", "#6b21a8", "#c084fc", "#f3e8ff"],
+        "emissive": "#9f7aea"
+      }
+    },
+    {
+      "id": "mask",
+      "label": "Mask",
+      "description": "Capas frontales con recortes negativos y fuerza axial.",
+      "sdf": {
+        "fields": [
+          { "type": "signed_sphere", "radius": 0.55 },
+          { "type": "slice", "axis": "z", "thickness": 0.22 },
+          { "type": "noise_carve", "scale": 1.1, "amplitude": 0.18 }
+        ],
+        "operators": ["difference", "smooth_subtract"],
+        "falloff": 0.36
+      },
+      "forces": {
+        "flow": 0.34,
+        "curl": 0.14,
+        "gravity": 0.22,
+        "attractors": [
+          { "position": [0.0, 0.1, 0.0], "strength": 0.24 },
+          { "position": [0.18, -0.15, 0.0], "strength": 0.18 }
+        ]
+      },
+      "palette": {
+        "background": "#0c0c0c",
+        "stops": ["#111827", "#4b5563", "#a855f7", "#fbbf24"],
+        "emissive": "#f59e0b"
+      }
+    },
+    {
+      "id": "exoskeleton",
+      "label": "Exoskeleton",
+      "description": "Armadura con huesos tubulares y campos de rigidez.",
+      "sdf": {
+        "fields": [
+          { "type": "capsule_array", "count": 12, "radius": 0.08, "spread": 0.65 },
+          { "type": "ridge_noise", "scale": 0.75, "gain": 0.55 },
+          { "type": "shell", "thickness": 0.1 }
+        ],
+        "operators": ["union", "chamfer"],
+        "falloff": 0.2
+      },
+      "forces": {
+        "flow": 0.18,
+        "curl": 0.42,
+        "gravity": 0.08,
+        "attractors": [
+          { "position": [0.0, 0.0, 0.0], "strength": 0.4 },
+          { "position": [0.0, 0.4, 0.0], "strength": 0.26 }
+        ]
+      },
+      "palette": {
+        "background": "#05040a",
+        "stops": ["#0b1224", "#1f2937", "#0ea5e9", "#22d3ee"],
+        "emissive": "#38bdf8"
+      }
+    },
+    {
+      "id": "halo",
+      "label": "Halo",
+      "description": "Corona radial con pulsos y brillo eléctrico.",
+      "sdf": {
+        "fields": [
+          { "type": "torus", "major_radius": 0.7, "minor_radius": 0.14 },
+          { "type": "pulse", "frequency": 2.1, "amplitude": 0.12 },
+          { "type": "glow_shell", "thickness": 0.06 }
+        ],
+        "operators": ["union", "expand"],
+        "falloff": 0.15
+      },
+      "forces": {
+        "flow": 0.46,
+        "curl": 0.18,
+        "gravity": 0.05,
+        "attractors": [
+          { "position": [0.0, 0.0, 0.0], "strength": 0.22 },
+          { "position": [0.0, 0.6, 0.0], "strength": 0.18 }
+        ]
+      },
+      "palette": {
+        "background": "#030712",
+        "stops": ["#0f172a", "#1d4ed8", "#60a5fa", "#e0f2fe"],
+        "emissive": "#93c5fd"
+      }
+    }
+  ]
+}
