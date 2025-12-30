@@ -22,6 +22,27 @@
 </head>
 <body class="h-screen flex flex-col items-center justify-center relative bg-white bg-grid">
 
+  <div id="experience-layer" class="experience-layer" aria-hidden="false">
+    <canvas id="experience-canvas" class="experience-canvas"></canvas>
+    <div class="hud">
+      <div class="hud-row">
+        <span class="hud-label">Estado</span>
+        <span id="hud-state" class="hud-value">idle</span>
+      </div>
+      <div class="hud-row">
+        <span class="hud-label">Instancias</span>
+        <span id="hud-count" class="hud-value">0</span>
+      </div>
+    </div>
+    <div class="cli-panel" aria-live="polite">
+      <div class="cli-header">CLI vibra</div>
+      <div id="cli-output" class="cli-output"></div>
+      <form id="cli-form" class="cli-form" autocomplete="off">
+        <input id="cli-input" class="cli-input" type="text" placeholder="comando (help, state warp, bloom 0.6)" />
+      </form>
+    </div>
+  </div>
+
   <!-- ========================================== -->
   <!-- PASO 1: ESCÁNER BIOMÉTRICO (MODERNO) -->
   <!-- ========================================== -->
@@ -99,6 +120,7 @@
   <footer class="fixed bottom-0 left-0 w-full p-4 text-center text-gray-500 text-xs bg-white/70 backdrop-blur-sm border-t border-gray-100">
     &copy; 2025 VibraAlto SpA — Inteligencia + Innovación
   </footer>
+  <script type="module" src="assets/js/experience.js"></script>
   <!-- Enlace a la carpeta 'js' y al archivo 'main.js' -->
   <script src="assets/js/main.js" defer></script>
 </body>
