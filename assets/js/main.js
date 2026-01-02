@@ -21,6 +21,7 @@ const cameraWrapper = video.parentElement.parentElement;
 let modelsLoaded = false;
 let streamActive = false;
 let detectionLoopId; // Usaremos esto para cancelar requestAnimationFrame
+let accessGranted = false;
 let lastDetectionTime = 0;
 const DETECTION_INTERVAL_MS = 500; // Intervalo de tiempo para ejecutar la detección pesada
 
@@ -31,12 +32,10 @@ const DETECTION_INTERVAL_MS = 500; // Intervalo de tiempo para ejecutar la detec
  * del Paso 1 (Scanner) al Paso 2 (Éxito).
  */
 function grantAccess() {
-  // 1. Detener el bucle de requestAnimationFrame
-  if (detectionLoopId) {
-    cancelAnimationFrame(detectionLoopId);
-  }
+  accessGranted = true;
+  stopDetectionLoop();
 
-  // 2. Detener la transmisión de la cámara
+  // 1. Detener la transmisión de la cámara
   if (video && video.srcObject) {
     const tracks = video.srcObject.getTracks();
     tracks.forEach(track => track.stop());
@@ -133,6 +132,16 @@ let successCount = 0;
 const MIN_AGE = 18;
 const CONFIRM_COUNT = 5;
 
+function stopDetectionLoop() {
+    if (detectionLoopId) {
+        cancelAnimationFrame(detectionLoopId);
+        detectionLoopId = null;
+    }
+    lastDetectionResult = null;
+    successCount = 0;
+    lastDetectionTime = 0;
+}
+
 /**
  * Dibuja los resultados de la última detección en el Canvas.
  * Se llama en cada frame (usando requestAnimationFrame) para mantener la fluidez visual.
@@ -189,6 +198,10 @@ function drawDetection(detection) {
  * Se llama constantemente (RAF), pero la detección pesada se limita a 500ms.
  */
 function detectionLoop(timestamp) {
+    if (accessGranted) {
+        return;
+    }
+
     // 1. Mantener la fluidez: Dibuja el último resultado inmediatamente en cada frame.
     drawDetection(lastDetectionResult);
 
@@ -216,6 +229,9 @@ function detectionLoop(timestamp) {
     }
     
     // 3. Continuar el bucle
+    if (accessGranted) {
+        return;
+    }
     detectionLoopId = requestAnimationFrame(detectionLoop);
 }
 
@@ -235,6 +251,10 @@ video.addEventListener('play', () => {
   if (statusText) statusText.innerText = "Analizando...";
 
   // Iniciar el bucle de detección optimizado
+  if (accessGranted) {
+    stopDetectionLoop();
+    return;
+  }
   lastDetectionTime = performance.now();
   detectionLoopId = requestAnimationFrame(detectionLoop);
 });
@@ -574,6 +594,12 @@ async function startAudioReactive() {
 }
 
 function stopAudioReactive() {
+  const hadAudioActive = vibraState.audioStream || vibraState.audioContext;
+  if (audioToggle && hadAudioActive) {
+    audioToggle.disabled = true;
+    audioToggle.textContent = 'Deteniendo audio...';
+  }
+
   if (vibraState.audioStream) {
     vibraState.audioStream.getTracks().forEach(track => track.stop());
   }
@@ -586,7 +612,10 @@ function stopAudioReactive() {
   vibraState.audioStream = null;
   vibraState.audioLevel = 0;
   if (audioStatus) audioStatus.textContent = 'Audio-reactive inactivo';
-  if (audioToggle) audioToggle.textContent = 'Activar audio-reactive';
+  if (audioToggle) {
+    audioToggle.disabled = false;
+    audioToggle.textContent = 'Activar audio-reactive';
+  }
 }
 
 function readAudioLevel() {
@@ -652,6 +681,20 @@ function drawFrame(timestamp) {
 
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
+
+function handleLifecycleAudioStop() {
+  if (vibraState.audioStream) {
+    stopAudioReactive();
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    handleLifecycleAudioStop();
+  }
+});
+
+window.addEventListener('beforeunload', handleLifecycleAudioStop);
 
 // En caso de que el usuario cargue directamente el paso de éxito (por SPA), intenta inicializar
 if (stepSuccess && !stepSuccess.classList.contains('hidden')) {
