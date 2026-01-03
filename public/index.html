@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VibraAlto Core | Altar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="page-header">
+      <p class="eyebrow">VibraAlto Core</p>
+      <h1>Altar sin biometría</h1>
+      <p class="lede">Narrativa central de VibraAlto para guiar a visitantes mayores de edad hacia WordPress, el Muro de Verdades y el agente EXO. Sin cámaras, sin escaneos: solo contexto y rutas claras.</p>
+    </header>
+
+    <section class="hero content-card">
+      <div>
+        <h1>Diseño, verdad y energía</h1>
+        <p class="muted">Explora el Muro de Verdades, revisa el modo Plan B y conecta el hook EXO. Este núcleo es ligero y respeta el filtro +18 mediante localStorage.</p>
+        <div class="hero-actions">
+          <a class="btn" href="muro.html">Ir al Muro de Verdades</a>
+          <a class="btn secondary" href="https://vibraalto.cl" target="_blank" rel="noreferrer">Volver a vibraalto.cl</a>
+        </div>
+      </div>
+      <div class="card">
+        <p class="eyebrow">Flujo de acceso</p>
+        <ul class="stacked-list">
+          <li>WordPress verifica <code>localStorage.vibraalto_age_verified</code>; si no existe, redirige a <strong>agegate.html</strong>.</li>
+          <li>agegate.html guarda la confirmación y devuelve a vibraalto.cl.</li>
+          <li>El core permanece accesible en GitHub Pages como respaldo.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="grid">
+        <div class="card">
+          <p class="eyebrow">EXO</p>
+          <h3>Hook central</h3>
+          <p class="muted">Importa <code>exoleon-hook.js</code> y conecta WhatsApp Business, Gmail u otros servicios. El hook es un stub listo para enrutar respuestas según estado de usuario.</p>
+        </div>
+        <div class="card">
+          <p class="eyebrow">Medios</p>
+          <h3>Recursos únicos</h3>
+          <p class="muted">Usa <code>public/media</code> como fuente única para blog, planeta base y verdades. Evita duplicados enlazando con rutas relativas.</p>
+        </div>
+        <div class="card">
+          <p class="eyebrow">Plan B</p>
+          <h3 id="planb-title">Estado operativo</h3>
+          <p class="muted" id="planb-status">Consultando estado…</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Entradas rápidas</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Age gate</h3>
+          <p class="muted">Filtro +18 sobrio. Guarda la preferencia en localStorage y redirige a vibraalto.cl.</p>
+          <a class="btn secondary" href="agegate.html">Probar agegate</a>
+        </div>
+        <div class="card">
+          <h3>Muro</h3>
+          <p class="muted">Lectura de Firestore en modo read-only. Sonidos se activan solo con interacción.</p>
+          <a class="btn secondary" href="muro.html">Ver mural</a>
+        </div>
+        <div class="card">
+          <h3>Plan B</h3>
+          <p class="muted">Resumen accionable en <code>planb.md</code>. Úsalo cuando se active el modo de contingencia.</p>
+          <a class="btn secondary" href="planb.md" target="_blank" rel="noreferrer">Leer Plan B</a>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      &copy; 2025 VibraAlto SpA — Core sin biometría.
+    </footer>
+  </div>
+
+  <script type="module">
+    import { isPlanBActive, getPlanBNotes } from './assets/core.js';
+
+    const statusEl = document.getElementById('planb-status');
+    const titleEl = document.getElementById('planb-title');
+    const plan = getPlanBNotes();
+
+    const active = isPlanBActive();
+    titleEl.textContent = active ? 'Estado operativo: Plan B activo' : 'Estado operativo: Plan B en espera';
+    statusEl.textContent = active
+      ? `Plan B activo. Prioridades: ${plan.acciones.join(' · ')}`
+      : 'Plan B desactivado. Continuidad normal del core.';
+  </script>
+</body>
+</html>
