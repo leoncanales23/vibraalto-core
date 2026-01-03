@@ -1,0 +1,13 @@
+[project]
+name = "vibraalto-core"
+version = "0.1.0"
+description = "Pipeline de Marching Cubes y postproceso headless en Blender para VibraAlto."
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.26.0",
+  "scikit-image>=0.23.0",
+  "trimesh>=4.4.0",
+]
+
+[project.scripts]
+vibra-pipeline = "pipeline.cli:main"

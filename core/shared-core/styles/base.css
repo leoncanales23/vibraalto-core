@@ -1,0 +1,23 @@
+@import './variables.css';
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--vibra-font-family);
+  background: var(--vibra-color-surface);
+  color: var(--vibra-color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--vibra-color-secondary);
+  transition: color var(--vibra-transition);
+}

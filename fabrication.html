@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laboratorio de Fabricación | VibraAlto</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Poppins:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <header class="page-hero">
+    <div class="hero-content">
+      <p class="eyebrow">Impresión 3D · WebXR · QA de mallas</p>
+      <h1 class="brand-font">Laboratorio de Fabricación VibraAlto</h1>
+      <p class="lead">Valida geometrías, genera STL listo para imprimir, visualiza en WebXR y consulta perfiles de máquinas y materiales.</p>
+      <div class="hero-actions">
+        <a href="#mesh-tools" class="btn-primary">Validar malla</a>
+        <a href="#xr-panel" class="btn-secondary">Ver en WebXR</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-grid">
+    <!-- Validación de mallas -->
+    <section id="mesh-tools" class="card">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">QA geométrico</p>
+          <h2>Validar malla y generar STL</h2>
+          <p class="muted">Detecta aristas abiertas, estimación rápida de espesor y volumen; descarga STL optimizado según perfil de máquina.</p>
+        </div>
+        <div class="actions">
+          <label class="file-upload">
+            <input type="file" id="mesh-input" accept=".stl,.obj,.glb,.gltf" />
+            <span>Subir STL / OBJ / GLB</span>
+          </label>
+          <button id="export-stl" class="btn-primary" disabled>Descargar STL limpio</button>
+        </div>
+      </div>
+
+      <div class="layout-two">
+        <div class="panel">
+          <h3>Resumen</h3>
+          <div id="mesh-summary" class="summary-list">
+            <p class="muted">Sube una malla para ver estadísticas.</p>
+          </div>
+          <div class="callout warning" id="mesh-status">Sin archivo cargado.</div>
+        </div>
+        <div class="panel">
+          <h3>Validación</h3>
+          <div id="validation-results" class="validation-grid">
+            <div class="stat">
+              <p class="label">Caras</p>
+              <p class="value" id="stat-faces">—</p>
+            </div>
+            <div class="stat">
+              <p class="label">Aristas abiertas</p>
+              <p class="value" id="stat-boundary">—</p>
+            </div>
+            <div class="stat">
+              <p class="label">Aristas no manifold</p>
+              <p class="value" id="stat-nonmanifold">—</p>
+            </div>
+            <div class="stat">
+              <p class="label">Volumen (cm³)</p>
+              <p class="value" id="stat-volume">—</p>
+            </div>
+            <div class="stat">
+              <p class="label">Espesor min (mm)</p>
+              <p class="value" id="stat-thickness">—</p>
+            </div>
+            <div class="stat">
+              <p class="label">Dimensiones (mm)</p>
+              <p class="value" id="stat-dims">—</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WebXR y viewer -->
+    <section id="xr-panel" class="card">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">WebXR</p>
+          <h2>Visualización volumétrica</h2>
+          <p class="muted">Orbita el modelo en escritorio o entra en VR para inspeccionar espesor y escala.</p>
+        </div>
+        <div id="vr-button-slot"></div>
+      </div>
+      <div class="viewer" id="viewer"></div>
+      <p class="muted text-right">Consejo: activa VR y habilita linterna/escala en tu visor.</p>
+    </section>
+
+    <!-- Perfiles de máquinas -->
+    <section class="card">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Impresoras y resinas</p>
+          <h2>Perfiles de máquinas</h2>
+          <p class="muted">Escala, tolerancias y nozzle recomendados según flota. Aplica el perfil antes de exportar el STL.</p>
+        </div>
+        <div class="profile-selector">
+          <label for="profile-select" class="label">Selecciona perfil</label>
+          <select id="profile-select"></select>
+        </div>
+      </div>
+      <div id="profile-details" class="profile-grid"></div>
+    </section>
+
+    <!-- Materiales -->
+    <section class="card">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Guía de materiales</p>
+          <h2>Tolerancias y usos</h2>
+          <p class="muted">Recomendaciones rápidas de material + flujo post-proceso.</p>
+        </div>
+      </div>
+      <div id="materials" class="materials-grid"></div>
+    </section>
+  </main>
+
+  <script type="module" src="assets/js/fabrication.js"></script>
+</body>
+</html>
