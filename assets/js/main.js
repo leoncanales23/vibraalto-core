@@ -10,6 +10,42 @@ const audioStatus = document.getElementById('audio-status');
 const presetOptions = document.getElementById('preset-options');
 const presetDescription = document.getElementById('preset-description');
 
+const defaultUIStrings = {
+  status: statusText?.textContent ?? '',
+  audioStatus: audioStatus?.textContent ?? '',
+  audioToggle: audioToggle?.textContent ?? '',
+  manual: manualBtn?.textContent ?? ''
+};
+
+function setActionButtonsDisabled(isDisabled, labels = {}, options = {}) {
+  const { includeAudio = true, includeManual = true } = options;
+
+  if (includeAudio && audioToggle) {
+    audioToggle.disabled = isDisabled;
+    if (isDisabled && labels.audioToggle) {
+      audioToggle.textContent = labels.audioToggle;
+    } else if (!isDisabled && defaultUIStrings.audioToggle) {
+      audioToggle.textContent = defaultUIStrings.audioToggle;
+    }
+  }
+
+  if (includeManual && manualBtn) {
+    manualBtn.disabled = isDisabled;
+    if (isDisabled && labels.manual) {
+      manualBtn.textContent = labels.manual;
+    } else if (!isDisabled && defaultUIStrings.manual) {
+      manualBtn.textContent = defaultUIStrings.manual;
+    }
+  }
+}
+
+function restoreStatusLabels() {
+  if (statusText && defaultUIStrings.status) statusText.textContent = defaultUIStrings.status;
+  if (audioStatus && defaultUIStrings.audioStatus) audioStatus.textContent = defaultUIStrings.audioStatus;
+  if (audioToggle && defaultUIStrings.audioToggle) audioToggle.textContent = defaultUIStrings.audioToggle;
+  if (manualBtn && defaultUIStrings.manual) manualBtn.textContent = defaultUIStrings.manual;
+}
+
 // Elementos de transición del nuevo HTML (Paso 1 y Paso 2)
 const stepScanner = document.getElementById('step-scanner'); // Paso 1 (Scanner)
 const stepSuccess = document.getElementById('step-success'); // Paso 2 (Éxito)
@@ -297,6 +333,22 @@ cameraAccessController.start();
 
 if (typeof window !== 'undefined') {
   delete window.cameraControllerOptions;
+}
+
+function stopCameraSession(reasonText = 'Cerrando cámara...', options = {}) {
+  const { keepButtonsDisabled = false } = options;
+  setActionButtonsDisabled(true, {
+    manual: reasonText,
+    audioToggle: 'Cerrando sesión...'
+  });
+  if (statusText) statusText.textContent = reasonText;
+
+  cameraAccessController.stop();
+
+  if (!keepButtonsDisabled) {
+    setActionButtonsDisabled(false);
+    restoreStatusLabels();
+  }
 }
 
 // ------------------------------------------
@@ -1007,11 +1059,11 @@ async function startAudioReactive() {
   }
 }
 
-function stopAudioReactive() {
+function stopAudioReactive(options = {}) {
+  const { keepButtonsDisabled = false } = options;
   const hadAudioActive = vibraState.audioStream || vibraState.audioContext;
   if (audioToggle && hadAudioActive) {
-    audioToggle.disabled = true;
-    audioToggle.textContent = 'Deteniendo audio...';
+    setActionButtonsDisabled(true, { audioToggle: 'Deteniendo audio...' }, { includeAudio: true, includeManual: false });
   }
 
   if (vibraState.audioStream) {
@@ -1025,10 +1077,9 @@ function stopAudioReactive() {
   vibraState.audioData = null;
   vibraState.audioStream = null;
   vibraState.audioLevel = 0;
-  if (audioStatus) audioStatus.textContent = 'Audio-reactive inactivo';
-  if (audioToggle) {
-    audioToggle.disabled = false;
-    audioToggle.textContent = 'Activar audio-reactive';
+  if (audioStatus) audioStatus.textContent = defaultUIStrings.audioStatus || 'Audio-reactive inactivo';
+  if (!keepButtonsDisabled) {
+    setActionButtonsDisabled(false, {}, { includeAudio: true, includeManual: false });
   }
 }
 
@@ -1154,19 +1205,21 @@ function drawFrame(timestamp) {
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
-function handleLifecycleAudioStop() {
-  if (vibraState.audioStream) {
-    stopAudioReactive();
-  }
+function handleLifecycleStop() {
+  const reason = document.visibilityState === 'hidden' ? 'Pausando cámara...' : 'Cerrando cámara...';
+  stopCameraSession(reason, { keepButtonsDisabled: true });
+  stopAudioReactive({ keepButtonsDisabled: true });
+  restoreStatusLabels();
+  setActionButtonsDisabled(false);
 }
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
-    handleLifecycleAudioStop();
+    handleLifecycleStop();
   }
 });
 
-window.addEventListener('beforeunload', handleLifecycleAudioStop);
+window.addEventListener('beforeunload', handleLifecycleStop);
 
 // En caso de que el usuario cargue directamente el paso de éxito (por SPA), intenta inicializar
 if (stepSuccess && !stepSuccess.classList.contains('hidden')) {
