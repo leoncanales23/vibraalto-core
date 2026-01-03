@@ -17,10 +17,8 @@ const defaultUIStrings = {
   manual: manualBtn?.textContent ?? ''
 };
 
-function setActionButtonsDisabled(isDisabled, labels = {}, options = {}) {
-  const { includeAudio = true, includeManual = true } = options;
-
-  if (includeAudio && audioToggle) {
+function setActionButtonsDisabled(isDisabled, labels = {}) {
+  if (audioToggle) {
     audioToggle.disabled = isDisabled;
     if (isDisabled && labels.audioToggle) {
       audioToggle.textContent = labels.audioToggle;
@@ -29,7 +27,7 @@ function setActionButtonsDisabled(isDisabled, labels = {}, options = {}) {
     }
   }
 
-  if (includeManual && manualBtn) {
+  if (manualBtn) {
     manualBtn.disabled = isDisabled;
     if (isDisabled && labels.manual) {
       manualBtn.textContent = labels.manual;
@@ -52,8 +50,11 @@ const stepSuccess = document.getElementById('step-success'); // Paso 2 (Éxito)
 
 // Nuevo elemento: Contenedor principal del scanner (ya no se usa para animación de borde, pero se mantiene la referencia por si acaso)
 // Se obtiene subiendo dos niveles desde <video> para llegar al contenedor de la tarjeta (el que tiene la clase 'p-2').
-const cameraWrapper = video.parentElement.parentElement; 
+const cameraWrapper = video.parentElement.parentElement;
 
+// ----------------------------
+// Controlador de acceso cámara
+// ----------------------------
 const cameraAccessController = (() => {
   const DETECTION_INTERVAL_MS = 500;
   const MIN_AGE = 18;
@@ -149,7 +150,7 @@ const cameraAccessController = (() => {
     try {
       const MODEL_URL = (typeof window !== 'undefined' && window.cameraModelBaseUrl)
         ? window.cameraModelBaseUrl
-        : '/models';
+        : './models';
 
       if (statusText) statusText.innerText = "Cargando modelos IA...";
 
@@ -250,6 +251,7 @@ const cameraAccessController = (() => {
 
   function detectionLoop(timestamp) {
       if (state.accessGranted) {
+          stopDetectionLoop();
           return;
       }
 
@@ -276,6 +278,7 @@ const cameraAccessController = (() => {
       }
       
       if (state.accessGranted) {
+          stopDetectionLoop();
           return;
       }
       state.detectionLoopId = requestAnimationFrame(detectionLoop);
@@ -1063,7 +1066,7 @@ function stopAudioReactive(options = {}) {
   const { keepButtonsDisabled = false } = options;
   const hadAudioActive = vibraState.audioStream || vibraState.audioContext;
   if (audioToggle && hadAudioActive) {
-    setActionButtonsDisabled(true, { audioToggle: 'Deteniendo audio...' }, { includeAudio: true, includeManual: false });
+    setActionButtonsDisabled(true, { audioToggle: 'Deteniendo audio...' });
   }
 
   if (vibraState.audioStream) {
@@ -1079,7 +1082,7 @@ function stopAudioReactive(options = {}) {
   vibraState.audioLevel = 0;
   if (audioStatus) audioStatus.textContent = defaultUIStrings.audioStatus || 'Audio-reactive inactivo';
   if (!keepButtonsDisabled) {
-    setActionButtonsDisabled(false, {}, { includeAudio: true, includeManual: false });
+    setActionButtonsDisabled(false);
   }
 }
 
