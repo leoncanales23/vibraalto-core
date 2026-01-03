@@ -1,48 +1,52 @@
-# VibraAlto Core
+# vibraalto-hosting23
+Landing Firebase Hosting con identidad VibraAlto, filtro +18 y hook ExoLeón.
 
-Landing estática para hosting (Firebase/GitHub Pages) con filtro +18, Muro de Verdades en solo lectura y hook EXO listo para integrar mensajería.
+## Pipeline 3D (Marching Cubes → Blender headless)
 
-## Estructura principal
+Nueva tubería para generar mallas a partir de densidades volumétricas y postprocesarlas con Blender en modo headless:
 
-```
-public/
-├── index.html          # Landing narrativa sin biometría
-├── agegate.html        # Filtro +18 (localStorage)
-├── agegate.css / js    # Estilos y lógica del age gate
-├── muro.html           # Muro de Verdades (Firestore read-only)
-├── exoleon-hook.js     # Stub del agente EXO
-├── assets/             # Estilos/JS compartidos (incluye core.js y styles.css)
-├── media/              # Único origen de audios y HTML auxiliares
-└── planb.md            # Protocolo de contingencia (Plan B)
+1) Instala dependencias Python:
+```bash
+pip install .  # usa pyproject.toml
 ```
 
-`firebase.json` apunta a la carpeta `public` para mantener todo el core en un solo lugar.
+2) Genera la malla con Marching Cubes:
+```bash
+python -m pipeline.cli capture \
+  --input density.npy \
+  --output mesh.obj \
+  --iso-level 0.55 \
+  --spacing 0.8,0.8,1.2 \
+  --step-size 2 \
+  --format obj
+```
 
-## Flujo +18 (WordPress + core)
-1. WordPress (o el frontend principal) revisa `localStorage.vibraalto_age_verified` en el `<head>`.
-2. Si falta la clave, redirige a `https://leoncanales23.github.io/vibraalto-core/agegate.html` (o al agegate hospedado).
-3. El age gate confirma edad, guarda la clave en localStorage y devuelve a `https://vibraalto.cl`.
-4. Las páginas del core (index/muro) también verifican la clave y redirigen al agegate si no existe.
+3) Postprocesa en Blender (remesh + solidify + export):
+```bash
+python -m pipeline.cli postprocess \
+  --input mesh.obj \
+  --output final.glb \
+  --voxel-size 0.004 \
+  --solidify-thickness 0.001 \
+  --format glb \
+  --smooth-shading
+```
 
-## Muro de Verdades
-- Lee únicamente desde Firestore (colección `verdades`) usando los SDK de Firebase 10.
-- No hay formularios ni endpoints de escritura.
-- Si falta configuración (`window.vibraaltoFirebaseConfig`), muestra frases de ejemplo en local.
-- Audios (`trueno_neblina_placeholder.mp3`, `susurro_androgino.mp3`) se cargan desde `public/media/verdades-archivo/audio/` y solo se reproducen tras interacción del usuario.
+4) Pipeline completo con un solo comando:
+```bash
+python -m pipeline.cli full \
+  --density density.npy \
+  --intermediate /tmp/mc.obj \
+  --output final.glb \
+  --iso-level 0.55 \
+  --spacing 1,1,1 \
+  --step-size 1 \
+  --format glb \
+  --voxel-size 0.004 \
+  --solidify-thickness 0.001
+```
 
-## EXO Hook
-`public/exoleon-hook.js` exporta `exoHook(data)`, registrando actividad y reflejando si `corePlanBActive` está habilitado. Importa `assets/core.js` para conocer el estado y notas del Plan B.
-
-## Plan B
-- `public/planb.md` documenta acciones y efectos esperados.
-- `assets/core.js` define `window.corePlanBActive` (false por defecto) y helpers para consultarlo.
-- Al activar Plan B, EXO debe responder sobrio y el Muro muestra badge de contingencia.
-
-## Media centralizada
-Todos los recursos compartidos se alojan en `public/media` (blog-futuro, planeta-base-vibra, verdades-archivo). Reutiliza rutas relativas para evitar duplicados entre WordPress y el core.
-
-## Despliegue rápido
-1. Sustituye los placeholders de Firebase en `window.vibraaltoFirebaseConfig` (muro.html) antes de publicar.
-2. Reemplaza los MP3 de `media/verdades-archivo/audio` por las pistas finales manteniendo nombres.
-3. Deploy Firebase: `firebase deploy --only hosting` (requiere CLI configurada).
-4. Para GitHub Pages, publica el contenido de `public/`.
+Notas:
+- Acepta grids `.npy`/`.npz`.
+- Permite guardar/cargar configuración JSON (`--config-out`, `--config-in`).
+- El script `pipeline/blender_runner.py` está pensado para ejecutarse dentro de Blender (`blender --background --python ...`).

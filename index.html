@@ -1,11 +1,148 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=public/index.html">
-  <title>VibraAlto Core</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verificación Biométrica | VibraAlto</title>
+  <!-- Enlace a la carpeta 'css' y al archivo 'styles.css' -->
+  <link rel="stylesheet" href="assets/css/styles.css">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Poppins (Moderno) & Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Poppins:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- Face API -->
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+  <!-- Iconos -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Three.js para la experiencia 3D del campo Vibra -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
 </head>
-<body>
-  <p>Redirigiendo al core en <a href="public/index.html">public/index.html</a>.</p>
+<body class="h-screen flex flex-col items-center justify-center relative bg-white bg-grid">
+
+  <!-- ========================================== -->
+  <!-- PASO 1: ESCÁNER BIOMÉTRICO (MODERNO) -->
+  <!-- ========================================== -->
+  <div id="step-scanner" class="relative z-10 flex flex-col items-center w-full max-w-md px-6 text-center transition-all duration-500">
+    
+    <!-- Header Limpio -->
+    <div class="mb-10 animate-fade-in-down">
+      <div class="flex items-center justify-center gap-2 mb-1">
+        <!-- Logo minimalista en negro/púrpura -->
+        <span class="text-2xl font-bold tracking-tight text-gray-900 brand-font">VIBRA<span class="text-vibra">ALTO</span></span>
+      </div>
+      <p class="text-gray-500 text-sm font-medium uppercase tracking-widest mt-2">Acceso Seguro</p>
+    </div>
+
+    <!-- Card del Scanner (Blanco con sombra suave) -->
+    <div class="bg-white p-2 rounded-3xl shadow-2xl shadow-purple-100 border border-gray-100">
+      <div class="relative w-64 h-64 rounded-2xl overflow-hidden bg-gray-50">
+        <video id="video" class="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]" autoplay muted playsinline></video>
+        <canvas id="canvas" class="absolute inset-0 w-full h-full transform scale-x-[-1]"></canvas>
+        
+        <!-- UI Overlay -->
+        <div id="scan-line" class="scan-line hidden"></div>
+        
+        <!-- Loader State -->
+        <div id="camera-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm z-20">
+          <div class="loader mb-3"></div>
+          <span class="text-xs text-gray-500 font-medium animate-pulse">Iniciando cámara...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback Estado -->
+    <div class="mt-8">
+      <div class="inline-flex items-center px-4 py-2 rounded-full bg-purple-50 border border-purple-100">
+        <div class="w-2 h-2 rounded-full bg-purple-500 animate-pulse mr-2"></div>
+        <p id="status-text" class="text-purple-700 font-medium text-sm">Esperando rostro...</p>
+      </div>
+      <p class="text-xs text-gray-400 mt-3 max-w-xs mx-auto">
+        Por favor, centra tu rostro en el recuadro para verificar tu edad.
+      </p>
+    </div>
+
+    <!-- Fallback Manual -->
+    <button id="manual-entry-btn" class="hidden mt-6 text-xs text-gray-400 hover:text-purple-600 underline transition">
+      Ingresar manualmente si la cámara falla
+    </button>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- PASO 2: ÉXITO (MODERNO & LIMPIO) -->
+  <!-- ========================================== -->
+  <div id="step-success" class="hidden relative z-10 w-full max-w-lg px-8 py-12 bg-white rounded-3xl shadow-xl border border-gray-100 text-center m-4">
+    
+    <!-- Icono Check -->
+    <div class="mx-auto w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+      <i data-lucide="check" class="w-8 h-8"></i>
+    </div>
+
+    <h2 class="text-3xl font-bold text-gray-900 mb-2 brand-font">ExoLeon</h2>
+    <p class="text-gray-500 mb-8">Has confirmado ser mayor de edad. Bienvenido a VibraAlto.</p>
+
+    <!-- Botón Principal -->
+    <a href="https://vibraalto.cl" class="btn-modern w-full py-4 rounded-xl text-lg flex items-center justify-center gap-2 group">
+      <span>Explorar Servicios</span>
+    </a>
+    
+    <div class="mt-6 flex justify-center gap-4 border-t border-gray-100 pt-6">
+       <span class="text-xs text-gray-400 font-medium">STRATEGY</span>
+       <span class="text-xs text-gray-400 font-medium">DESIGN</span>
+       <span class="text-xs text-gray-400 font-medium">GROWTH</span>
+    </div>
+
+    <!-- Experiencia sensorial -->
+    <div class="mt-10 space-y-6 text-left">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-[0.2em] text-gray-400 font-semibold">Gestos & Audio</p>
+          <h3 class="text-xl font-semibold text-gray-900">Campos de fuerza interactivos</h3>
+          <p class="text-gray-500 text-sm">Explora una visual reactiva a tus gestos y al espectro de audio en tiempo real.</p>
+        </div>
+        <button id="audio-toggle" class="btn-modern px-4 py-2 rounded-lg text-sm whitespace-nowrap">Activar audio-reactive</button>
+      </div>
+
+      <div class="grid gap-6 lg:grid-cols-2 vibra-grid">
+        <div class="relative rounded-3xl border border-purple-100 bg-gradient-to-br from-purple-50 via-white to-amber-50 overflow-hidden shadow-inner">
+          <canvas id="vibra-field" class="w-full h-[320px] md:h-[420px] vibra-canvas"></canvas>
+          <div class="absolute inset-0 pointer-events-none flex flex-col justify-between p-4">
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-white/70 text-purple-700 backdrop-blur">Pointer → fuerzas locales</span>
+              <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-white/70 text-amber-700 backdrop-blur">FFT → uniforms</span>
+            </div>
+            <div class="flex items-center gap-2 self-end">
+              <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              <p id="audio-status" class="text-xs text-gray-700 font-medium bg-white/70 px-3 py-1 rounded-full backdrop-blur">Audio-reactive inactivo</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-gray-100 bg-gray-50 p-4 md:p-6 shadow-sm">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold">Presets narrativos</p>
+              <h4 class="text-lg font-semibold text-gray-900">Selecciona la vibra</h4>
+            </div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full bg-white border border-gray-200 text-xs font-semibold text-gray-600">Panel de selección</span>
+          </div>
+          <div id="preset-options" class="mt-4 grid gap-3"></div>
+          <div id="preset-description" class="mt-4 text-sm text-gray-600 leading-relaxed"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Footer Legal (Fijo en la parte inferior) -->
+  <footer class="fixed bottom-0 left-0 w-full p-4 text-center text-gray-500 text-xs bg-white/70 backdrop-blur-sm border-t border-gray-100">
+    &copy; 2025 VibraAlto SpA — Inteligencia + Innovación
+  </footer>
+  <!-- Enlace a la carpeta 'js' y al archivo 'main.js' -->
+  <script src="assets/js/main.js" defer></script>
 </body>
 </html>
