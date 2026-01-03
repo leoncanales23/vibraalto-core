@@ -303,6 +303,8 @@ if (typeof window !== 'undefined') {
 // Experiencia sensorial: gestos + audio-reactive + presets
 // ------------------------------------------
 
+const vibraFeatureFlag3D = true; // Permite degradar a la versión 2D si WebGL/Three falla.
+
 const vibraPresets = [
   {
     id: 'aurora',
@@ -341,33 +343,82 @@ const vibraPresets = [
 
 const vibraState = {
   initialized: false,
+  renderMode: 'pending', // pending | three | gl2d
+  // 2D GL fallback
   gl: null,
   program: null,
   attribLocations: {},
   uniformLocations: {},
   forcePoints: [],
   maxForces: 4,
+  // Audio shared state
   audioContext: null,
   analyser: null,
   audioData: null,
   audioLevel: 0,
   audioStream: null,
+  // Animation handles
   animationId: null,
   currentPreset: vibraPresets[0],
-  lastPointer: null
+  lastPointer: null,
+  // Three.js scene graph
+  renderer: null,
+  scene: null,
+  camera: null,
+  particles: null,
+  particleCount: 1200,
+  particlePositions: [],
+  particleVelocities: [],
+  particleTargets: [],
+  particleMaskPoints: [],
+  raycaster: null,
+  pointerVector: null,
+  threeUniforms: null,
+  lastMaskSource: 'text',
+  showroomEnabled: true,
+  currentMode: 'free',
+  canvasCtx: null
 };
 
 function activateVibraField() {
   if (!vibraCanvas || vibraState.initialized) {
-    if (vibraCanvas) resizeVibraCanvas();
+    if (vibraCanvas && vibraState.renderMode === 'gl2d') resizeVibraCanvas();
+    if (vibraCanvas && vibraState.renderMode === 'three') resizeVibraThree();
     return;
   }
 
   initPresetPanel();
-  if (!initVibraGL()) return;
-  vibraState.initialized = true;
-  resizeVibraCanvas();
-  startVibraLoop();
+  const useThree = vibraFeatureFlag3D && typeof THREE !== 'undefined';
+
+  if (useThree && initVibraThree()) {
+    vibraState.renderMode = 'three';
+    vibraState.initialized = true;
+    resizeVibraThree();
+    startVibraThreeLoop();
+    console.info('[Vibra] Escena Three.js activa.');
+  } else {
+    if (useThree) {
+      console.warn('[Vibra] Three.js presente pero la inicialización falló. Degradando a 2D.');
+    } else {
+      console.warn('[Vibra] WebGL/Three no disponible. Degradando a canvas 2D existente.');
+    }
+    const ready = initVibraGL();
+    if (!ready) return;
+    if (vibraState.renderMode === 'pending') vibraState.renderMode = 'gl2d';
+    vibraState.initialized = true;
+    if (vibraState.renderMode === 'canvas2d') return;
+    resizeVibraCanvas();
+    startVibraLoop();
+  }
+}
+
+// -------------------------
+// Panel de presets
+// -------------------------
+
+function applyPreset(preset) {
+  vibraState.currentPreset = preset;
+  updatePresetSelection(preset.id);
 }
 
 function initPresetPanel() {
@@ -404,10 +455,7 @@ function initPresetPanel() {
     card.appendChild(textWrapper);
     card.appendChild(icon);
 
-    card.addEventListener('click', () => {
-      vibraState.currentPreset = preset;
-      updatePresetSelection(preset.id);
-    });
+    card.addEventListener('click', () => applyPreset(preset));
 
     if (index === 0) card.classList.add('active');
     presetOptions.appendChild(card);
@@ -425,11 +473,340 @@ function updatePresetSelection(id) {
   presetDescription.textContent = vibraState.currentPreset.description;
 }
 
+// --------------------------------------------------
+// Experiencia 3D con Three.js + InstancedMesh
+// --------------------------------------------------
+
+function initVibraThree() {
+  try {
+    const renderer = new THREE.WebGLRenderer({
+      canvas: vibraCanvas,
+      antialias: true,
+      alpha: true
+    });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    renderer.setClearColor(0x0f0b1e, 1);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+    camera.position.z = 4.5;
+
+    const geometry = new THREE.PlaneGeometry(0.05, 0.05);
+    const material = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      uniforms: {
+        u_time: { value: 0 },
+        u_audio: { value: 0 },
+        u_colorA: { value: new THREE.Color().fromArray(vibraState.currentPreset.colorA) },
+        u_colorB: { value: new THREE.Color().fromArray(vibraState.currentPreset.colorB) },
+        u_glow: { value: new THREE.Color().fromArray(vibraState.currentPreset.glow) },
+        u_maskTex: { value: null },
+        u_showroom: { value: vibraState.showroomEnabled ? 1 : 0 }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        precision highp float;
+        varying vec2 vUv;
+        uniform float u_time;
+        uniform float u_audio;
+        uniform vec3 u_colorA;
+        uniform vec3 u_colorB;
+        uniform vec3 u_glow;
+        uniform sampler2D u_maskTex;
+        uniform float u_showroom;
+
+        void main() {
+          vec2 uv = vUv - 0.5;
+          float radial = length(uv) * 2.0;
+          float pulse = sin(u_time * 2.0 + radial * 6.283) * 0.5 + 0.5;
+          vec3 base = mix(u_colorA, u_colorB, pulse);
+          float glow = smoothstep(0.7, 0.0, radial) + u_audio * 0.6;
+          vec3 color = base + u_glow * glow;
+          float alpha = mix(0.45, 0.9, glow);
+          vec4 mask = texture2D(u_maskTex, vUv);
+          alpha *= mix(1.0, mask.r, step(0.01, mask.a));
+          if (u_showroom < 0.5) {
+            // modo showroom off: indica inactividad
+            alpha *= 0.3;
+            color *= 0.5;
+          }
+          gl_FragColor = vec4(color, alpha);
+        }
+      `
+    });
+
+    const particles = new THREE.InstancedMesh(geometry, material, vibraState.particleCount);
+    scene.add(particles);
+
+    vibraState.renderer = renderer;
+    vibraState.scene = scene;
+    vibraState.camera = camera;
+    vibraState.particles = particles;
+    vibraState.threeUniforms = material.uniforms;
+    vibraState.particlePositions = new Array(vibraState.particleCount).fill(0).map(() => new THREE.Vector3(
+      (Math.random() - 0.5) * 3,
+      (Math.random() - 0.5) * 3,
+      (Math.random() - 0.5) * 1.2
+    ));
+    vibraState.particleVelocities = new Array(vibraState.particleCount).fill(0).map(() => new THREE.Vector3(
+      (Math.random() - 0.5) * 0.004,
+      (Math.random() - 0.5) * 0.004,
+      (Math.random() - 0.5) * 0.002
+    ));
+    vibraState.particleTargets = new Array(vibraState.particleCount).fill(0).map(() => new THREE.Vector3(
+      (Math.random() - 0.5) * 3,
+      (Math.random() - 0.5) * 3,
+      0
+    ));
+    vibraState.raycaster = new THREE.Raycaster();
+    vibraState.pointerVector = new THREE.Vector2();
+
+    vibraCanvas.addEventListener('pointermove', handlePointerThree);
+    vibraCanvas.addEventListener('pointerdown', handlePointerThree);
+    window.addEventListener('resize', resizeVibraThree);
+    if (audioToggle) audioToggle.addEventListener('click', toggleAudioReactive);
+
+    generateTextMask('VIBRA');
+    return true;
+  } catch (err) {
+    console.error('[Vibra] Error iniciando escena Three.js:', err);
+    return false;
+  }
+}
+
+function resizeVibraThree() {
+  if (!vibraState.renderer || !vibraState.camera || !vibraCanvas) return;
+  const rect = vibraCanvas.getBoundingClientRect();
+  const width = rect.width || 640;
+  const height = rect.height || 360;
+  vibraState.renderer.setSize(width, height, false);
+  vibraState.camera.aspect = width / height;
+  vibraState.camera.updateProjectionMatrix();
+}
+
+function handlePointerThree(event) {
+  if (!vibraCanvas || !vibraState.camera || !vibraState.raycaster) return;
+  const rect = vibraCanvas.getBoundingClientRect();
+  vibraState.pointerVector.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  vibraState.pointerVector.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  vibraState.raycaster.setFromCamera(vibraState.pointerVector, vibraState.camera);
+  const planeZ = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+  const intersect = new THREE.Vector3();
+  vibraState.raycaster.ray.intersectPlane(planeZ, intersect);
+
+  vibraState.forcePoints.push({
+    x: intersect.x,
+    y: intersect.y,
+    strength: 1.0,
+    life: 1
+  });
+  if (vibraState.forcePoints.length > vibraState.maxForces) vibraState.forcePoints.shift();
+}
+
+function startVibraThreeLoop() {
+  const dummy = new THREE.Object3D();
+
+  const render = (timestamp) => {
+    readAudioLevel();
+    updateForces();
+    updateThreeParticles();
+    updateThreeUniforms(timestamp);
+
+    for (let i = 0; i < vibraState.particleCount; i++) {
+      dummy.position.copy(vibraState.particlePositions[i]);
+      dummy.rotation.z = Math.sin(timestamp * 0.001 + i * 0.01) * 0.6;
+      dummy.updateMatrix();
+      vibraState.particles.setMatrixAt(i, dummy.matrix);
+    }
+    vibraState.particles.instanceMatrix.needsUpdate = true;
+    vibraState.renderer.render(vibraState.scene, vibraState.camera);
+    vibraState.animationId = requestAnimationFrame(render);
+  };
+
+  vibraState.animationId = requestAnimationFrame(render);
+}
+
+function updateThreeUniforms(timestamp) {
+  if (!vibraState.threeUniforms) return;
+  vibraState.threeUniforms.u_time.value = timestamp / 1000;
+  vibraState.threeUniforms.u_audio.value = vibraState.audioLevel;
+  vibraState.threeUniforms.u_colorA.value.fromArray(vibraState.currentPreset.colorA);
+  vibraState.threeUniforms.u_colorB.value.fromArray(vibraState.currentPreset.colorB);
+  vibraState.threeUniforms.u_glow.value.fromArray(vibraState.currentPreset.glow);
+  vibraState.threeUniforms.u_showroom.value = vibraState.showroomEnabled ? 1 : 0;
+}
+
+function updateThreeParticles() {
+  const mode = vibraState.currentMode || 'free';
+  const audioPush = vibraState.audioLevel * 0.02;
+
+  for (let i = 0; i < vibraState.particleCount; i++) {
+    const pos = vibraState.particlePositions[i];
+    const vel = vibraState.particleVelocities[i];
+    const target = vibraState.particleTargets[i];
+
+    // fuerzas base
+    vel.multiplyScalar(0.985);
+    vel.z *= 0.98;
+
+    if (mode === 'form' && vibraState.particleMaskPoints.length) {
+      const maskTarget = vibraState.particleMaskPoints[i % vibraState.particleMaskPoints.length];
+      target.set(maskTarget.x, maskTarget.y, 0);
+      vel.x += (target.x - pos.x) * 0.02;
+      vel.y += (target.y - pos.y) * 0.02;
+    } else if (mode === 'pulse') {
+      vel.x += (Math.sin(performance.now() * 0.002 + i) * 0.001 + audioPush);
+      vel.y += (Math.cos(performance.now() * 0.002 + i * 0.3) * 0.001 + audioPush * 0.8);
+    } else if (mode === 'storm') {
+      vel.x += (Math.random() - 0.5) * 0.01;
+      vel.y += (Math.random() - 0.5) * 0.01;
+    } else if (mode === 'warp') {
+      const angle = Math.atan2(pos.y, pos.x) + 0.05;
+      vel.x += Math.cos(angle) * 0.005;
+      vel.y += Math.sin(angle) * 0.005;
+    } else {
+      // free
+      vel.x += (Math.random() - 0.5) * 0.001;
+      vel.y += (Math.random() - 0.5) * 0.001;
+    }
+
+    // fuerzas del puntero
+    vibraState.forcePoints.forEach(force => {
+      const dx = pos.x - force.x;
+      const dy = pos.y - force.y;
+      const dist = Math.max(0.1, Math.sqrt(dx * dx + dy * dy));
+      const influence = (force.strength * force.life) / (dist * 2.5);
+      vel.x += dx / dist * influence;
+      vel.y += dy / dist * influence;
+    });
+
+    // audio empuja en Z
+    vel.z += (audioPush * 0.5) - pos.z * 0.01;
+
+    pos.add(vel);
+
+    // contención suave
+    const limit = 2.2;
+    if (pos.length() > limit) {
+      pos.multiplyScalar(0.96);
+    }
+  }
+}
+
+function generateTextMask(text) {
+  vibraState.lastMaskSource = 'text';
+  const canvas = document.createElement('canvas');
+  canvas.width = 320;
+  canvas.height = 320;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 96px Poppins, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text || 'VIBRA', canvas.width / 2, canvas.height / 2);
+  setMaskFromCanvas(canvas);
+}
+
+function setMaskFromCanvas(canvas) {
+  const ctx = canvas.getContext('2d');
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  const points = [];
+
+  for (let y = 0; y < canvas.height; y += 4) {
+    for (let x = 0; x < canvas.width; x += 4) {
+      const idx = (y * canvas.width + x) * 4;
+      if (data[idx] > 20) {
+        const nx = (x / canvas.width - 0.5) * 2;
+        const ny = (y / canvas.height - 0.5) * -2;
+        points.push({ x: nx * 1.2, y: ny * 1.2 });
+      }
+    }
+  }
+
+  vibraState.particleMaskPoints = points;
+  if (vibraState.threeUniforms) {
+    const texture = new THREE.CanvasTexture(canvas);
+    vibraState.threeUniforms.u_maskTex.value = texture;
+  }
+}
+
+async function generateLogoMask(url) {
+  vibraState.lastMaskSource = 'logo';
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = url;
+  await img.decode();
+  const canvas = document.createElement('canvas');
+  canvas.width = 320;
+  canvas.height = 320;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  setMaskFromCanvas(canvas);
+}
+
+// CLI público para mapear comandos existentes a uniforms/targets 3D
+function handleVibraCommand(command, payload) {
+  switch (command) {
+    case 'preset': {
+      const preset = vibraPresets.find(p => p.id === payload);
+      if (preset) applyPreset(preset);
+      break;
+    }
+    case 'text': {
+      generateTextMask(payload || 'VIBRA');
+      vibraState.currentMode = 'form';
+      break;
+    }
+    case 'logo': {
+      if (payload) generateLogoMask(payload);
+      vibraState.currentMode = 'form';
+      break;
+    }
+    case 'showroom': {
+      vibraState.showroomEnabled = payload === 'on';
+      if (vibraState.threeUniforms) vibraState.threeUniforms.u_showroom.value = vibraState.showroomEnabled ? 1 : 0;
+      break;
+    }
+    case 'mode': {
+      vibraState.currentMode = payload;
+      break;
+    }
+    default:
+      console.info('[Vibra] Comando no reconocido', command, payload);
+  }
+}
+
+window.vibraCLI = handleVibraCommand;
+
+// --------------------------------------------------
+// Fallback 2D GL (versión previa)
+// --------------------------------------------------
+
 function initVibraGL() {
   const gl = vibraCanvas.getContext('webgl');
   if (!gl) {
-    console.error('WebGL no disponible para el canvas interactivo.');
-    return false;
+    console.error('WebGL no disponible para el canvas interactivo. Activando fallback 2D.');
+    const ctx = vibraCanvas.getContext('2d');
+    if (!ctx) return false;
+    vibraState.renderMode = 'canvas2d';
+    vibraState.canvasCtx = ctx;
+    vibraCanvas.addEventListener('pointermove', handlePointerForce);
+    vibraCanvas.addEventListener('pointerdown', handlePointerForce);
+    if (audioToggle) audioToggle.addEventListener('click', toggleAudioReactive);
+    startCanvasFallback();
+    return true;
   }
 
   const vertexSrc = `
@@ -667,6 +1044,64 @@ function readAudioLevel() {
   }
   const avg = sum / vibraState.audioData.length;
   vibraState.audioLevel = Math.min(1, avg / 255);
+}
+
+function startCanvasFallback() {
+  if (!vibraCanvas || !vibraState.canvasCtx) return;
+  const ctx = vibraState.canvasCtx;
+
+  const render = (timestamp) => {
+    const rect = vibraCanvas.getBoundingClientRect();
+    const width = rect.width || 640;
+    const height = rect.height || 360;
+    const dpr = window.devicePixelRatio || 1;
+    vibraCanvas.width = width * dpr;
+    vibraCanvas.height = height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    readAudioLevel();
+    updateForces();
+
+    ctx.fillStyle = '#0f0b1e';
+    ctx.fillRect(0, 0, width, height);
+
+    const preset = vibraState.currentPreset;
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, colorArrayToRGBA(preset.colorA, 0.4 + vibraState.audioLevel * 0.3));
+    gradient.addColorStop(1, colorArrayToRGBA(preset.colorB, 0.6 + vibraState.audioLevel * 0.4));
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    const mode = vibraState.currentMode || 'free';
+    ctx.globalCompositeOperation = 'lighter';
+    vibraState.forcePoints.forEach(force => {
+      const x = force.x * width;
+      const y = (1 - force.y) * height;
+      const pulse = (Math.sin(timestamp * 0.005 + force.x * 10) + 1) * 0.5;
+      const radius = 40 + pulse * 50 + vibraState.audioLevel * 60;
+      const alpha = Math.max(0, force.life) * 0.6;
+      const color = mode === 'storm' ? preset.glow : preset.colorB;
+      const radial = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      radial.addColorStop(0, colorArrayToRGBA(color, alpha));
+      radial.addColorStop(1, colorArrayToRGBA(color, 0));
+      ctx.fillStyle = radial;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalCompositeOperation = 'source-over';
+
+    vibraState.animationId = requestAnimationFrame(render);
+  };
+
+  vibraState.animationId = requestAnimationFrame(render);
+}
+
+function colorArrayToRGBA(arr, alpha = 1) {
+  const r = Math.round((arr[0] || 0) * 255);
+  const g = Math.round((arr[1] || 0) * 255);
+  const b = Math.round((arr[2] || 0) * 255);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function startVibraLoop() {
