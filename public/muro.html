@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muro de Verdades | VibraAlto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="page-header">
+      <p class="eyebrow">Muro de Verdades</p>
+      <h1>Lectura segura desde Firestore</h1>
+      <p class="lede">Solo lectura: el frontend consulta frases curadas desde Firestore y las despliega. No existe ningún punto de escritura en este flujo.</p>
+      <div class="badge" id="planb-badge">Plan B en espera</div>
+    </header>
+
+    <section class="content-card">
+      <div class="audio-panel">
+        <div class="status-dot" id="audio-status" aria-hidden="true"></div>
+        <button class="btn" id="audio-toggle" type="button">Activar ambiente</button>
+        <span class="muted small">Los audios solo se inician tras tu clic.</span>
+      </div>
+      <audio id="ambiente" src="media/verdades-archivo/audio/trueno_neblina_placeholder.mp3" loop></audio>
+      <audio id="susurro" src="media/verdades-archivo/audio/susurro_androgino.mp3" loop></audio>
+    </section>
+
+    <section class="section">
+      <h2>Verdades</h2>
+      <p class="muted">Contenido leído desde Firestore (colección <code>verdades</code>). Sin formularios ni escritura.</p>
+      <div id="truths" class="truth-list" aria-live="polite"></div>
+      <p id="status" class="muted small"></p>
+    </section>
+
+    <footer>
+      Revisa <a href="planb.md" target="_blank" rel="noreferrer">Plan B</a> si se presentan fallos de proveedores.
+    </footer>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
+    import { getFirestore, collection, getDocs, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+    import { isPlanBActive } from './assets/core.js';
+
+    const AGE_GATE_KEY = 'vibraalto_age_verified';
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(AGE_GATE_KEY) !== 'true') {
+      window.location.href = './agegate.html';
+    }
+
+    const firebaseConfig = window.vibraaltoFirebaseConfig ?? {
+      apiKey: 'TODO_REEMPLAZAR',
+      authDomain: 'TODO_REEMPLAZAR.firebaseapp.com',
+      projectId: 'TODO_REEMPLAZAR',
+    };
+
+    const truthsEl = document.getElementById('truths');
+    const statusEl = document.getElementById('status');
+    const badgeEl = document.getElementById('planb-badge');
+    const audioToggle = document.getElementById('audio-toggle');
+    const ambiente = document.getElementById('ambiente');
+    const susurro = document.getElementById('susurro');
+    const audioStatus = document.getElementById('audio-status');
+
+    function setPlanBState() {
+      const active = isPlanBActive();
+      badgeEl.textContent = active ? 'Plan B activo' : 'Plan B en espera';
+      badgeEl.style.background = active ? 'rgba(196,155,11,0.25)' : 'rgba(255,255,255,0.08)';
+    }
+
+    setPlanBState();
+
+    async function loadTruths() {
+      truthsEl.innerHTML = '';
+      const placeholder = [
+        { frase: 'Conecta primero, automatiza después.', autor: 'Equipo VibraAlto' },
+        { frase: 'La verdad necesita un espacio seguro.', autor: 'Muro de Verdades' }
+      ];
+
+      const missingConfig = Object.values(firebaseConfig).some((value) => !value || String(value).includes('TODO'));
+
+      if (missingConfig) {
+        statusEl.textContent = 'Configura las credenciales de Firebase en window.vibraaltoFirebaseConfig para activar los datos reales.';
+        renderTruths(placeholder);
+        return;
+      }
+
+      try {
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const truthsQuery = query(collection(db, 'verdades'), orderBy('createdAt', 'desc'), limit(20));
+        const snapshot = await getDocs(truthsQuery);
+        const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        if (!data.length) {
+          statusEl.textContent = 'No hay verdades publicadas todavía. Mostrando fallback.';
+          renderTruths(placeholder);
+          return;
+        }
+        statusEl.textContent = `Mostrando ${data.length} entradas en modo lectura.`;
+        renderTruths(data);
+      } catch (error) {
+        console.error('Error al leer Firestore', error);
+        statusEl.textContent = 'No se pudieron recuperar los datos de Firestore. Se muestran ejemplos locales.';
+        renderTruths(placeholder);
+      }
+    }
+
+    function renderTruths(items) {
+      truthsEl.innerHTML = '';
+      items.forEach((item) => {
+        const element = document.createElement('article');
+        element.className = 'truth-item';
+        const author = item.autor || 'Anónimo';
+        element.innerHTML = `<strong>${item.frase || ''}</strong><div class="muted small">${author}</div>`;
+        truthsEl.appendChild(element);
+      });
+    }
+
+    async function startAudio() {
+      audioStatus.classList.add('active');
+      ambiente.volume = 0.4;
+      susurro.volume = 0.18;
+
+      try {
+        await ambiente.play();
+        await susurro.play();
+        audioToggle.textContent = 'Ambiente activo';
+      } catch (err) {
+        audioStatus.classList.remove('active');
+        statusEl.textContent = 'No se pudo iniciar el audio (verifica los MP3 de media/verdades-archivo/audio).';
+        console.error('Error al reproducir audio', err);
+      }
+    }
+
+    audioToggle.addEventListener('click', startAudio);
+
+    loadTruths();
+  </script>
+</body>
+</html>
