@@ -111,7 +111,9 @@ const cameraAccessController = (() => {
 
   async function loadModels() {
     try {
-      const MODEL_URL = './models';
+      const MODEL_URL = (typeof window !== 'undefined' && window.cameraModelBaseUrl)
+        ? window.cameraModelBaseUrl
+        : '/models';
 
       if (statusText) statusText.innerText = "Cargando modelos IA...";
 
@@ -289,8 +291,13 @@ const cameraAccessController = (() => {
   };
 })();
 
-cameraAccessController.init();
+const controllerOptions = (typeof window !== 'undefined' && window.cameraControllerOptions) ? window.cameraControllerOptions : {};
+cameraAccessController.init(controllerOptions);
 cameraAccessController.start();
+
+if (typeof window !== 'undefined') {
+  delete window.cameraControllerOptions;
+}
 
 // ------------------------------------------
 // Experiencia sensorial: gestos + audio-reactive + presets
