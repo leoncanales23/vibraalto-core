@@ -198,6 +198,72 @@ main {
   50% { transform: scale(1.2); opacity: 0.5; }
 }
 
+/* ------------------------------------------ */
+/* EXPERIENCIA SENSORIAL (Gestos + Audio) */
+/* ------------------------------------------ */
+
+.vibra-grid {
+    align-items: stretch;
+}
+
+.vibra-canvas {
+    display: block;
+    width: 100%;
+    border-radius: 24px;
+    background: radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.1), transparent 35%),
+                radial-gradient(circle at 80% 0%, rgba(224, 181, 57, 0.12), transparent 40%),
+                #0f0b1e;
+}
+
+.preset-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    cursor: pointer;
+    transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.preset-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -18px rgba(139, 92, 246, 0.45);
+}
+
+.preset-card.active {
+    border-color: #8B5CF6;
+    box-shadow: 0 18px 40px -24px rgba(139, 92, 246, 0.65);
+}
+
+.preset-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.preset-chip.primary {
+    background: rgba(139, 92, 246, 0.12);
+    color: #6d28d9;
+}
+
+.preset-chip.ambient {
+    background: rgba(13, 148, 136, 0.12);
+    color: #0f766e;
+}
+
+.preset-chip.story {
+    background: rgba(234, 179, 8, 0.12);
+    color: #a16207;
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
