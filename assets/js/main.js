@@ -50,8 +50,11 @@ const stepSuccess = document.getElementById('step-success'); // Paso 2 (Éxito)
 
 // Nuevo elemento: Contenedor principal del scanner (ya no se usa para animación de borde, pero se mantiene la referencia por si acaso)
 // Se obtiene subiendo dos niveles desde <video> para llegar al contenedor de la tarjeta (el que tiene la clase 'p-2').
-const cameraWrapper = video.parentElement.parentElement; 
+const cameraWrapper = video.parentElement.parentElement;
 
+// ----------------------------
+// Controlador de acceso cámara
+// ----------------------------
 const cameraAccessController = (() => {
   const DETECTION_INTERVAL_MS = 500;
   const MIN_AGE = 18;
@@ -147,7 +150,7 @@ const cameraAccessController = (() => {
     try {
       const MODEL_URL = (typeof window !== 'undefined' && window.cameraModelBaseUrl)
         ? window.cameraModelBaseUrl
-        : '/models';
+        : './models';
 
       if (statusText) statusText.innerText = "Cargando modelos IA...";
 
@@ -248,6 +251,7 @@ const cameraAccessController = (() => {
 
   function detectionLoop(timestamp) {
       if (state.accessGranted) {
+          stopDetectionLoop();
           return;
       }
 
@@ -274,6 +278,7 @@ const cameraAccessController = (() => {
       }
       
       if (state.accessGranted) {
+          stopDetectionLoop();
           return;
       }
       state.detectionLoopId = requestAnimationFrame(detectionLoop);
