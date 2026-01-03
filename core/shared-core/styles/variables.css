@@ -1,0 +1,11 @@
+:root {
+  --vibra-font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --vibra-color-primary: #7c3aed;
+  --vibra-color-secondary: #22d3ee;
+  --vibra-color-surface: #0b1021;
+  --vibra-color-surface-alt: #111827;
+  --vibra-color-text: #e5e7eb;
+  --vibra-color-muted: #9ca3af;
+  --vibra-radius: 12px;
+  --vibra-transition: 180ms ease;
+}

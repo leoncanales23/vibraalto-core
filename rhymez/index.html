@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profesor Rhymez | Verificación Biométrica</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Poppins (Moderno) & Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Poppins:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Face API -->
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+  <!-- Iconos -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="h-screen flex flex-col items-center justify-center relative bg-white bg-grid">
+
+  <!-- ========================================== -->
+  <!-- PASO 1: ESCÁNER BIOMÉTRICO (RHYMEZ) -->
+  <!-- ========================================== -->
+  <div id="step-scanner" class="relative z-10 flex flex-col items-center w-full max-w-md px-6 text-center transition-all duration-500">
+
+    <!-- Header -->
+    <div class="mb-10 animate-fade-in-down">
+      <div class="flex flex-col items-center justify-center gap-1 mb-1">
+        <span class="text-2xl font-bold tracking-tight text-gray-900 brand-font">RHYMEZ</span>
+        <span class="text-sm font-semibold text-purple-600 uppercase tracking-[0.25em]">Mic Check</span>
+      </div>
+      <p class="text-gray-500 text-sm font-medium uppercase tracking-widest mt-2">Acceso seguro al estudio</p>
+    </div>
+
+    <!-- Card del Scanner -->
+    <div class="bg-white p-2 rounded-3xl shadow-2xl shadow-purple-100 border border-gray-100">
+      <div class="relative w-64 h-64 rounded-2xl overflow-hidden bg-gray-50">
+        <video id="video" class="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]" autoplay muted playsinline></video>
+        <canvas id="canvas" class="absolute inset-0 w-full h-full transform scale-x-[-1]"></canvas>
+
+        <!-- UI Overlay -->
+        <div id="scan-line" class="scan-line hidden"></div>
+
+        <!-- Loader State -->
+        <div id="camera-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm z-20">
+          <div class="loader mb-3"></div>
+          <span class="text-xs text-gray-500 font-medium animate-pulse">Afinando cámara y ritmo...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback Estado -->
+    <div class="mt-8">
+      <div class="inline-flex items-center px-4 py-2 rounded-full bg-purple-50 border border-purple-100">
+        <div class="w-2 h-2 rounded-full bg-purple-500 animate-pulse mr-2"></div>
+        <p id="status-text" class="text-purple-700 font-medium text-sm">Esperando rostro...</p>
+      </div>
+      <p class="text-xs text-gray-400 mt-3 max-w-xs mx-auto">
+        Rhymez necesita verte para ajustar la frecuencia. Mantén el rostro dentro del recuadro.
+      </p>
+    </div>
+
+    <!-- Fallback Manual -->
+    <button id="manual-entry-btn" class="hidden mt-6 text-xs text-gray-400 hover:text-purple-600 underline transition">
+      Ingresar manualmente si la cámara falla
+    </button>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- PASO 2: ÉXITO (RHYMEZ) -->
+  <!-- ========================================== -->
+  <div id="step-success" class="hidden relative z-10 w-full max-w-lg px-8 py-12 bg-white rounded-3xl shadow-xl border border-gray-100 text-center m-4">
+
+    <!-- Icono Check -->
+    <div class="mx-auto w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+      <i data-lucide="check" class="w-8 h-8"></i>
+    </div>
+
+    <h2 id="success-title" class="text-3xl font-bold text-gray-900 mb-2 brand-font">Profesor Rhymez</h2>
+    <p id="success-description" class="text-gray-500 mb-6">Tu edad quedó verificada. El guardián del ritmo te deja pasar.</p>
+    <p id="rhymez-message" class="text-sm text-gray-500 mb-8">Rhymez prepara un mensaje personalizado para ti.</p>
+
+    <!-- Botón Principal -->
+    <a href="https://vibraalto.cl" class="btn-modern w-full py-4 rounded-xl text-lg flex items-center justify-center gap-2 group">
+      <span>Entrar al estudio</span>
+    </a>
+
+    <div class="mt-6 flex justify-center gap-4 border-t border-gray-100 pt-6">
+       <span class="text-xs text-gray-400 font-medium">LYRICS</span>
+       <span class="text-xs text-gray-400 font-medium">FLOW</span>
+       <span class="text-xs text-gray-400 font-medium">VIBE</span>
+    </div>
+
+    <div class="mt-10 grid gap-4 text-left">
+      <div class="rounded-2xl border border-purple-100 bg-purple-50/60 p-4">
+        <p class="text-xs uppercase tracking-[0.2em] text-purple-600 font-semibold">Protocolo</p>
+        <p class="text-gray-800 font-semibold mt-2">Primero seguridad, después el mensaje.</p>
+        <p class="text-gray-600 text-sm mt-1">Cuando veas el check, el verso comienza. Usa auriculares para la mejor experiencia.</p>
+      </div>
+      <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+        <p class="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold">Próximos pasos</p>
+        <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mt-2">
+          <li>Explora las rutas creativas de VibraAlto.</li>
+          <li>Comparte tu vibra con la comunidad.</li>
+          <li>Activa audio para experimentar las texturas sonoras.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Legal -->
+  <footer class="fixed bottom-0 left-0 w-full p-4 text-center text-gray-500 text-xs bg-white/70 backdrop-blur-sm border-t border-gray-100">
+    &copy; 2025 VibraAlto SpA — Profesor Rhymez, guardian del flow consciente.
+  </footer>
+
+  <script src="../assets/js/rhymez.js" defer></script>
+  <script src="../assets/js/main.js" defer></script>
+</body>
+</html>
